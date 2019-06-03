@@ -33,12 +33,15 @@ const int red_pct = 50;
 int green_pct = 50;
 int max_DAC   = 255;
 
+#define SERIAL_OUT  1
+
 void setup() {
   // declare the ledPin as an OUTPUT:
   pinMode(redPin, OUTPUT);
   pinMode(greenpin, OUTPUT);
-  //Serial.begin(9600);
-
+#if SERIAL_OUT
+  Serial.begin(9600);
+#endif //SERIAL_OUT
 }
 
 void loop() {
@@ -47,26 +50,34 @@ void loop() {
   if(sensorValue >= good) {
     analogWrite(greenpin, (max_DAC*green_pct)/100);
     analogWrite(redPin, 0);
-    //Serial.print("good ");
-    //Serial.println(sensorValue);
+#if SERIAL_OUT
+    Serial.print("good ");
+    Serial.println(sensorValue);
+#endif //SERIAL_OUT
     }
   else if(sensorValue < bad) {
     analogWrite(greenpin, 0);
     analogWrite(redPin, (max_DAC*red_pct)/100);
-    //Serial.print("bad ");
-    //Serial.println(sensorValue);
+#if SERIAL_OUT
+    Serial.print("bad ");
+    Serial.println(sensorValue);
+#endif //SERIAL_OUT
   }
   else {
     int blend = (sensorValue-bad)*100/spread;  // calculate blend percent
     analogWrite(greenpin, blend*max_DAC/100*green_pct/100);
     analogWrite(redPin, (100-blend)*max_DAC/100*red_pct/100);
-    /*
+#if SERIAL_OUT
     Serial.print("between ");
     Serial.print(sensorValue);
     Serial.print(" "); Serial.print(blend);
     Serial.print(" green "); Serial.print(blend*max_DAC/100);
     Serial.print(" red "); Serial.println((max_DAC*(100-blend))/100);
-    */
+#endif //SERIAL_OUT
   }
+#if SERIAL_OUT
   delay(10);
+#else //SERIAL_OUT
+  delay(100);
+#endif //SERIAL_OUT
 }
