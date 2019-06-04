@@ -33,6 +33,9 @@ const int red_pct = 50;
 int green_pct = 50;
 int max_DAC   = 255;
 
+static const int analog_repeat =        4;  // consedutive analog readings to sum to reduce noise
+static const int analog_repeat_delay =  4;  // delay in ms between consecutive analog readings
+
 #define SERIAL_OUT  1
 
 void setup() {
@@ -46,12 +49,25 @@ void setup() {
 
 void loop() {
   // read the value from the sensor:
-  sensorValue = analogRead(sensorPin);
+  sensorValue = 0;
+  for(int i=0; i<analog_repeat; i++) {
+    sensorValue += analogRead(sensorPin);
+    delay(analog_repeat_delay);
+  }
+#if SERIAL_OUT
+    Serial.print("raw ");
+    Serial.print(sensorValue);
+#endif //SERIAL_OUT
+  sensorValue = (sensorValue + analog_repeat/2)/analog_repeat;
+#if SERIAL_OUT
+    Serial.print(" rounded ");
+    Serial.print(sensorValue);
+#endif //SERIAL_OUT
   if(sensorValue >= good) {
     analogWrite(greenpin, (max_DAC*green_pct)/100);
     analogWrite(redPin, 0);
 #if SERIAL_OUT
-    Serial.print("good ");
+    Serial.print(" good ");
     Serial.println(sensorValue);
 #endif //SERIAL_OUT
     }
@@ -59,25 +75,27 @@ void loop() {
     analogWrite(greenpin, 0);
     analogWrite(redPin, (max_DAC*red_pct)/100);
 #if SERIAL_OUT
-    Serial.print("bad ");
+    Serial.print(" bad  ");
     Serial.println(sensorValue);
 #endif //SERIAL_OUT
   }
   else {
-    int blend = (sensorValue-bad)*100/spread;  // calculate blend percent
-    analogWrite(greenpin, blend*max_DAC/100*green_pct/100);
-    analogWrite(redPin, (100-blend)*max_DAC/100*red_pct/100);
+    unsigned int blend = (sensorValue-bad)*100/spread;  // calculate blend percent
+    unsigned int green = blend*max_DAC/100*green_pct/100;
+    unsigned int red = (100-blend)*max_DAC/100*red_pct/100;
+    analogWrite(greenpin, green);
+    analogWrite(redPin, red);
 #if SERIAL_OUT
-    Serial.print("between ");
-    Serial.print(sensorValue);
-    Serial.print(" "); Serial.print(blend);
-    Serial.print(" green "); Serial.print(blend*max_DAC/100);
-    Serial.print(" red "); Serial.println((max_DAC*(100-blend))/100);
+    Serial.print(" betw ");   Serial.print(sensorValue);
+    Serial.print(" blend ");  Serial.print(blend);
+    Serial.print(" green ");  Serial.print(green);
+    Serial.print(" red ");    Serial.print(red);
+    Serial.print(" sum ");    Serial.println(green+red);
 #endif //SERIAL_OUT
   }
 #if SERIAL_OUT
-  delay(10);
+  delay(1000);
 #else //SERIAL_OUT
-  delay(100);
+  delay(10);
 #endif //SERIAL_OUT
 }
