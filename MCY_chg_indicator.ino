@@ -18,23 +18,27 @@
 
 */
 
-const int high = 1000;
-const int good = 921;
-const int marginal = 887;
-const int bad = 682;
-const int spread = good - bad;
+// thresholds based on apparent 4.7V ADC reference voltage when Pro Mini is provided with Vcc = 5.0V
+static const uint16_t high = 1000;
+static const uint16_t good = 921;
+static const uint16_t marginal = 887;
+static const uint16_t bad = 682;
+static const uint16_t spread = good - bad;
 
-int sensorPin =   A0;   // select the input pin for the potentiometer
-int redPin =      11;   // select the pin for the LED
-int sensorValue = 0;    // variable to store the value coming from the sensor
-int greenpin =    10;
+// I really wish Arduino didn't hide the signatures for library finctions like pinMode()
+static const int sensorPin =   A0;   // select the input pin for the potentiometer
+static const int redPin =      11;   // select the pin for the LED
+static const int greenpin =    10;
 
-const int red_pct = 50;
-int green_pct = 50;
-int max_DAC   = 255;
+static uint16_t sensorValue = 0;    // variable to store the value coming from the sensor
 
-static const int analog_repeat =        4;  // consedutive analog readings to sum to reduce noise
-static const int analog_repeat_delay =  4;  // delay in ms between consecutive analog readings
+const uint16_t red_pct = 50;
+const uint16_t green_pct = 50;
+const uint16_t max_DAC   = 255;
+
+static const uint16_t analog_repeat =        8;  // consedutive analog readings to sum to reduce noise
+static const uint16_t analog_repeat_delay =  4;  // delay in ms between consecutive analog readings
+static uint16_t readings[analog_repeat];
 
 #define SERIAL_OUT  1
 
@@ -51,11 +55,16 @@ void loop() {
   // read the value from the sensor:
   sensorValue = 0;
   for(int i=0; i<analog_repeat; i++) {
-    sensorValue += analogRead(sensorPin);
+    readings[i] = analogRead(sensorPin);
+    sensorValue += readings[i];
     delay(analog_repeat_delay);
   }
 #if SERIAL_OUT
-    Serial.print("raw ");
+  for(int i=0; i<analog_repeat; i++) {
+    Serial.print(readings[i]);
+    Serial.print(" ");
+  }
+    Serial.print(" ");
     Serial.print(sensorValue);
 #endif //SERIAL_OUT
   sensorValue = (sensorValue + analog_repeat/2)/analog_repeat;
@@ -80,9 +89,9 @@ void loop() {
 #endif //SERIAL_OUT
   }
   else {
-    unsigned int blend = (sensorValue-bad)*100/spread;  // calculate blend percent
-    unsigned int green = blend*max_DAC/100*green_pct/100;
-    unsigned int red = (100-blend)*max_DAC/100*red_pct/100;
+    uint16_t blend = (sensorValue-bad)*100/spread;  // calculate blend percent
+    uint16_t green = blend*max_DAC/100*green_pct/100;
+    uint16_t red = (100-blend)*max_DAC/100*red_pct/100;
     analogWrite(greenpin, green);
     analogWrite(redPin, red);
 #if SERIAL_OUT
