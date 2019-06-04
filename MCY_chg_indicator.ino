@@ -40,7 +40,7 @@ static const uint16_t analog_repeat =        8;  // consedutive analog readings 
 static const uint16_t analog_repeat_delay =  4;  // delay in ms between consecutive analog readings
 static uint16_t readings[analog_repeat];
 
-#define SERIAL_OUT  1
+#define SERIAL_OUT  0
 
 void setup() {
   // declare the ledPin as an OUTPUT:
