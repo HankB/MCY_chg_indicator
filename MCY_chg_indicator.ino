@@ -29,6 +29,7 @@ static const uint16_t spread = good - bad;
 static const int sensorPin =   A0;   // select the input pin for the potentiometer
 static const int redPin =      9;   // select the pin for the LED
 static const int greenpin =    10;
+static const int bluePin =     11;
 
 static uint16_t sensorValue = 0;    // variable to store the value coming from the sensor
 
@@ -36,12 +37,17 @@ const uint16_t red_pct = 50;
 const uint16_t green_pct = 50;
 const uint16_t max_DAC   = 255;
 
-#define SERIAL_OUT  1
+// blip the color periodically to time malfunctioning traffic lights
+static const unsigned long  time_blip_period = 15 * 1000; // milliseconds for time blip period
+static const unsigned long  time_blip_duration = 150;   // milliseconds duration for blip
+
+#define SERIAL_OUT  0
 
 void setup() {
   // declare the ledPin as an OUTPUT:
   pinMode(redPin, OUTPUT);
   pinMode(greenpin, OUTPUT);
+  pinMode(bluePin, OUTPUT);
 #if SERIAL_OUT
   Serial.begin(9600);
 #endif //SERIAL_OUT
@@ -71,47 +77,78 @@ uint16_t readVoltage(void) {
   return value;
 }
 
-void loop() {
-  // read the value from the sensor:
-  sensorValue = readVoltage();
-
-#if SERIAL_OUT
-  Serial.print(" rounded ");
-  Serial.print(sensorValue);
-#endif //SERIAL_OUT
-  if (sensorValue >= good) {
+void setLEDcolor(uint16_t reading) {
+  if (reading >= good) {
     analogWrite(greenpin, (max_DAC * green_pct) / 100);
     analogWrite(redPin, 0);
 #if SERIAL_OUT
     Serial.print(" good ");
-    Serial.println(sensorValue);
+    Serial.println(reading);
+    delay(1000);
 #endif //SERIAL_OUT
   }
-  else if (sensorValue < bad) {
+  else if (reading < bad) {
     analogWrite(greenpin, 0);
     analogWrite(redPin, (max_DAC * red_pct) / 100);
 #if SERIAL_OUT
     Serial.print(" bad  ");
-    Serial.println(sensorValue);
+    Serial.println(reading);
+    delay(1000);
 #endif //SERIAL_OUT
   }
   else {
-    uint16_t blend = (sensorValue - bad) * 100 / spread; // calculate blend percent
+    uint16_t blend = (reading - bad) * 100 / spread; // calculate blend percent
     uint16_t green = blend * max_DAC / 100 * green_pct / 100;
     uint16_t red = (100 - blend) * max_DAC / 100 * red_pct / 100;
     analogWrite(greenpin, green);
     analogWrite(redPin, red);
 #if SERIAL_OUT
-    Serial.print(" betw ");   Serial.print(sensorValue);
+    Serial.print(" betw ");   Serial.print(reading);
     Serial.print(" blend ");  Serial.print(blend);
     Serial.print(" green ");  Serial.print(green);
     Serial.print(" red ");    Serial.print(red);
     Serial.print(" sum ");    Serial.println(green + red);
+    delay(1000);
 #endif //SERIAL_OUT
   }
-#if SERIAL_OUT
-  delay(1000);
-#else //SERIAL_OUT
-  delay(10);
-#endif //SERIAL_OUT
+
 }
+
+void blipIfTime(unsigned long time_now) {
+  static unsigned long        time_blip_timer = time_blip_period;
+  static unsigned int blip_repeat_counter = 0;
+  static const unsigned int blip_repeat = 4;    // blip 1, 2, 3 and 4 times
+
+  if (time_now >= time_blip_timer) {
+    time_blip_timer = time_now + time_blip_period;
+    for (int i = 0; i <= blip_repeat_counter; i++) {  // flash 1 - blip_repeat times
+      analogWrite(greenpin, 0);
+      analogWrite(redPin, 0);
+      analogWrite(bluePin, 255);
+      delay(time_blip_duration);
+      analogWrite(bluePin, 0);
+      setLEDcolor(readVoltage());
+      delay(time_blip_duration);
+    }
+    blip_repeat_counter++;
+    if (blip_repeat_counter >= blip_repeat) {
+      blip_repeat_counter = 0;
+    }
+  }
+}
+
+  void loop() {
+    // read the value from the sensor:
+    sensorValue = readVoltage();
+
+#if SERIAL_OUT
+    Serial.print(" rounded ");
+    Serial.print(sensorValue);
+#endif //SERIAL_OUT
+
+    setLEDcolor(sensorValue);
+
+    blipIfTime(millis());
+
+    delay(10);
+  }
