@@ -16,6 +16,12 @@ When the electrical charging system on a motorcycle is heavily loaded, it may no
 Connect the middle leg of the volume fader to A0 with outer legs connected to ground and 5V to provide a 0-5V analog input.
 Connect the longest leg of the RGB LED to ground. When the ground is toward the left, the remaining pins are red, green and blue left to right respectively. Connect the LED inputs to the digital outputs indicated in the code.
 
+
+## Other information
+
+General description https://docs.google.com/document/d/1oGInpiPI6TI1JvXcmjz_O_Tvbv5o_kn_NtnWW1Aht5o/edit?usp=sharing
+Resistor vs. ADC reading calculations https://docs.google.com/spreadsheets/d/1I-rtjzvy2xRRpHdrsMQctPhc0Ry49aa2tnfBnYBoY4o/edit?usp=sharing
+
 ## TODO
 
 * Average several input readings for better noise rejection. - done
