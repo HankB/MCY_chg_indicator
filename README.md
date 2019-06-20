@@ -4,6 +4,12 @@
 
 When the electrical charging system on a motorcycle is heavily loaded, it may not keep the battery fully charged. The first symptom of that is that voltage will drop continuously until it is no longer sufficient to keep the engine running. The second symptom is that the motorcycle will stop running and/or may not restart. If there is an indication of system voltage, the issue can be dealt with (by shedding load) before the moto stops running. This project will produce an indication using an Arduino/AVR to monitor voltage and transition an RGB LED from green through yellow and to red to indicate charging status.
 
+Secondary motivation is to help mark the passage of time. Many traffic lights won't detect the presence of a motorcycle and after some time it is allowed to proceed when traffic permits. Flash one, two, three and four times to mark passage of a minute. (15 second intervals.)
+
+## Functionality
+
+* Vary the color of the RGB LED from red -> yellow -> green to indicate system voltage.
+* Flash (blip) the LED periodically to mark the passage of time.
 
 ## Hardware
 
